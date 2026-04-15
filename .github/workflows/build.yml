@@ -4,6 +4,7 @@ on:
   push:
     branches: [ "*" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,37 +18,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------------------------
-      # Linux setup
-      # -------------------------
+      # Linux deps
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y build-essential cmake ninja-build
 
-      # -------------------------
-      # Windows setup (Ninja)
-      # -------------------------
-      - name: Setup Ninja (Windows)
-        if: runner.os == 'Windows'
-        run: choco install ninja
-
-      # -------------------------
-      # Configure (Release only)
-      # -------------------------
+      # Configure
       - name: Configure
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      # -------------------------
       # Build
-      # -------------------------
       - name: Build
         run: cmake --build build
 
-      # -------------------------
-      # Upload artifact
-      # -------------------------
+      # Upload
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
