@@ -1,13 +1,14 @@
 #include <iostream>
 
+//#include "srcOld/Networking/NetworkManager.h"
+//#include "srcOld/Threading/ThreadingManager.h"
 
 int main() {
-    const auto lang = "C++";
-    std::cout << "Hello and welcome to " << lang << "!\n";
+    //const auto threadingManager = std::make_shared<ThreadingManager>();
+    //const auto networkManager = std::make_shared<NetworkManager>(threadingManager);
 
-    for (int i = 1; i <= 5; i++) {
-        std::cout << "i = " << i << std::endl;
-    }
-
-    return 0;
+    //while (networkManager->isListening()) {
+    //    _sleep(1);
+    //}
+    //std::cout << "Closing Program" << std::endl;
 }
