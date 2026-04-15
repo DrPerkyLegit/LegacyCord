@@ -46,7 +46,7 @@ jobs:
       # -------------------------
       - name: Configure (Windows)
         if: runner.os == 'Windows'
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
 
       # -------------------------
       # Build
