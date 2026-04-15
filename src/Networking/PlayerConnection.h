@@ -25,7 +25,7 @@ enum class ConnectionErrors {
 
 class PlayerConnection {
 public:
-    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), _isPending(true), _packetReader(std::make_shared<PacketParser>()) {}
+    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), _isPending(true)/*, _packetReader(std::make_shared<PacketParser>())*/ {}
 
     ConnectionErrors getConnectionError() const { return this->_currentError; }
     void setConnectionError(const ConnectionErrors error) { this->_currentError = error; }
@@ -35,11 +35,11 @@ public:
     socket_t getClientSocket() const { return this->clientConnection; }
     socket_t getServerSocket() const { return this->serverConnection; }
 
-    std::shared_ptr<PacketParser> getPacketParser() { return this->_packetReader; }
+    //std::shared_ptr<PacketParser> getPacketParser() { return this->_packetReader; }
 private:
     std::atomic<bool> _isPending;
 
-    std::shared_ptr<PacketParser> _packetReader;
+    //std::shared_ptr<PacketParser> _packetReader;
 
     ConnectionErrors _currentError = ConnectionErrors::None;
     socket_t clientConnection = (socket_t)(~0);
