@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ "*" ]
+    branches: ["*"]
   pull_request:
   workflow_dispatch:
 
@@ -18,29 +18,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Ninja (Windows)
-        if: runner.os == 'Windows'
-        uses: 'seanmiddleditch/gha-setup-ninja@v4'
-
+      # -------------------------
+      # Linux dependencies
+      # -------------------------
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y build-essential cmake ninja-build
 
-      # Configure
-      - name: Configure
+      # -------------------------
+      # Windows: setup MSVC toolchain (IMPORTANT FIX)
+      # -------------------------
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # -------------------------
+      # Configure (Linux uses Ninja explicitly)
+      # -------------------------
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      # Build
-      - name: Build
-        run: cmake --build build
+      # -------------------------
+      # Configure (Windows uses MSVC generator for stability)
+      # -------------------------
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      # Upload
+      # -------------------------
+      # Build
+      # -------------------------
+      - name: Build
+        run: cmake --build build --config Release
+
+      # -------------------------
+      # Upload artifacts
+      # -------------------------
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: LegacyCord-${{ runner.os }}
           path: |
+            build/**/Release/*
             build/**/*.exe
-            build/**/LegacyCord
+            build/**/LegacyCord*
