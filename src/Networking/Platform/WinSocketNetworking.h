@@ -77,7 +77,7 @@ public:
         inet_pton(addr.sin_family, this->_proxyAddress.c_str(), &addr.sin_addr);
 
         if (bind(listener, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0) {
-            LegacyCord::getLogger()->Error("[WinSocketNetworking::tick] WinSock Failed To Bind To Address (", this->_proxyAddress.c_str(), ":", this->_proxyPort, "): ", WSAGetLastError());
+            LegacyCord::getLogger()->Error("[WinSocketNetworking::tick] Bind Failed (", this->_proxyAddress.c_str(), ":", this->_proxyPort, "): ", WSAGetLastError());
             return;
         }
 
@@ -96,7 +96,7 @@ public:
             inet_pton(serverAddr.sin_family, this->_hostAddress.c_str(), &serverAddr.sin_addr);
 
             if (connect(server, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) != 0) {
-                LegacyCord::getLogger()->Error("[WinSocketNetworking::tick] WinSock Failed To Connect To Master Server (", this->_hostAddress.c_str(), ":", this->_hostPort, "): ", WSAGetLastError());
+                LegacyCord::getLogger()->Error("[WinSocketNetworking::tick] Failed To Connect To Minecraft Server (", this->_hostAddress.c_str(), ":", this->_hostPort, "): ", WSAGetLastError());
                 shutdown(connectingClient, SD_BOTH); //todo: send kick packet to client instead of just closing the socket
                 continue;
             }

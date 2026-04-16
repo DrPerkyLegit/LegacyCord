@@ -6,10 +6,9 @@
 #include <memory>
 
 #include "Networking/NetworkManager.h"
-
+#include "Utils/Logger.h"
 
 class Config;
-class Logger;
 
 class LegacyCord {
 public:

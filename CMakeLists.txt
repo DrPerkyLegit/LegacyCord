@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(LegacyCord src/LegacyCord.cpp
         src/Networking/NetworkManager.cpp
+        src/Networking/Platform/POSIXNetworking.h
 )
 
 target_include_directories(LegacyCord PUBLIC includes)

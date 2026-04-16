@@ -11,6 +11,13 @@
 typedef SOCKET socket_t;
 
 #else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <fcntl.h>
+#include <cerrno>
+
+typedef int socket_t;
 
 #endif
 
