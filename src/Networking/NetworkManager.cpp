@@ -5,11 +5,17 @@
 #include <Networking/NetworkManager.h>
 
 #include "ConnectionThread.h"
-#include "Platform/WinSocketNetworking.h"
 #include "Utils/Config.h"
+#include "LegacyCord.h"
+
+#if defined(_WIN64)
+#include "Platform/WinSocketNetworking.h"
+#elif defined(__linux__)
+#include "Platform/POSIXNetworking.h"
+#endif
 
 NetworkManager::NetworkManager(LegacyCord* core) {
-    std::string proxyAddress = core->getConfig()->getString("proxy-host", "127.0.0.1");
+    std::string proxyAddress = core->getConfig()->getString("proxy-host", "0.0.0.0");
     unsigned short proxyPort = core->getConfig()->getInt("proxy-port", 25565);
 
     std::string hostAddress = core->getConfig()->getString("server-host", "127.0.0.1");
@@ -20,7 +26,9 @@ NetworkManager::NetworkManager(LegacyCord* core) {
     LegacyCord::getLogger()->Info("Starting Networking Platform - WinSock");
     this->_platformNetworkingStub = std::make_shared<WinSockNetworking>(this, proxyAddress, proxyPort, hostAddress, hostPort);
 #elif defined(__linux__)
-
+    LegacyCord::getLogger()->Info("Starting Networking Platform - POSIX");
+    this->_platformNetworkingStub = std::make_shared<POSIXNetworking>(this, proxyAddress, proxyPort, hostAddress, hostPort);
+    dynamic_cast<POSIXNetworking *>(this->_platformNetworkingStub.get())->start();
 #endif
 
     int connectionThreads = core->getConfig()->getInt("connection-threads", 4);
