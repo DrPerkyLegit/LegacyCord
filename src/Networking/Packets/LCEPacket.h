@@ -10,7 +10,7 @@ class LCEPacket {
 public:
     //size in bytes
     static const int MAXPACKETSIZE = 64*1024;
-    static const int HEADERSIZE = 0x4;
+    static const int HEADERSIZE = 0x04;
 
 
     LCEPacket(const char* buffer) {
@@ -18,11 +18,19 @@ public:
         this->packetId = static_cast<uint8_t>(buffer[4]);
 
         this->data = new char[(this->size - 1)];
-        memcpy(this->data, (buffer + static_cast<size_t>(1)), this->size - 1);
+        memcpy(this->data, buffer + 5, (this->size - 1));
     };
 
     ~LCEPacket() {
         delete[] data;
+    }
+
+    uint8_t getId() const {
+        return packetId;
+    }
+
+    int getSize() const {
+        return size;
     }
 
 private:

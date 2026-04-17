@@ -24,9 +24,8 @@ public:
         {
             int size = recv(clientSocket, buffer, sizeof(buffer), 0);
             if (size > 0) {
-                //if (connection->getPacketParser()->feed(buffer, size, false)) {
-                    send(serverSocket, buffer, size, 0);
-                //}
+                connection->getPacketParser()->feed(buffer, size, false);
+                send(serverSocket, buffer, size, 0);
             } else if (size == 0) {
                 LegacyCord::getLogger()->Info("[WinSockNetworking::tickConnection] ", "Client Socket Closed: ", clientSocket);
                 connection->setConnectionError(ConnectionErrors::ClientClosed);
@@ -44,9 +43,8 @@ public:
         {
             int size = recv(serverSocket, buffer, sizeof(buffer), 0);
             if (size > 0) {
-                //if (connection->getPacketParser()->feed(buffer, size, true)) {
-                    send(clientSocket, buffer, size, 0);
-                //}
+                connection->getPacketParser()->feed(buffer, size, true);
+                send(clientSocket, buffer, size, 0);
             } else if (size == 0) {
                 LegacyCord::getLogger()->Debug("[WinSockNetworking::tickConnection] ", "Server Socket Closed: ", serverSocket);
                 connection->setConnectionError(ConnectionErrors::ServerClosed);

@@ -3,36 +3,30 @@
 //
 #pragma once
 #include "Packets/PacketParser.h"
+#include "../PlatformVariables.h"
 
-#if defined(_WIN32)
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-typedef SOCKET socket_t;
-
-#else
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/tcp.h>
-#include <fcntl.h>
-#include <cerrno>
-
-typedef int socket_t;
-
-#endif
+enum class GenericConnectionError {
+    None,
+    Server,
+    Client
+};
 
 enum class ConnectionErrors {
     None,
     ServerClosed,
-    ClientClosed,
-
     ServerStreamError,
-    ClientStreamError
+
+    ServerError_MAX,
+
+    ClientClosed,
+    ClientStreamError,
+
+    ClientError_MAX,
 };
 
 class PlayerConnection {
 public:
-    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), _isPending(true)/*, _packetReader(std::make_shared<PacketParser>())*/ {}
+    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), _isPending(true), _packetReader(std::make_shared<PacketParser>(this)) {}
 
     ConnectionErrors getConnectionError() const { return this->_currentError; }
     void setConnectionError(const ConnectionErrors error) { this->_currentError = error; }
@@ -42,11 +36,18 @@ public:
     socket_t getClientSocket() const { return this->clientConnection; }
     socket_t getServerSocket() const { return this->serverConnection; }
 
-    //std::shared_ptr<PacketParser> getPacketParser() { return this->_packetReader; }
+    static GenericConnectionError genericError(ConnectionErrors error) {
+        if (error > ConnectionErrors::None && error < ConnectionErrors::ServerError_MAX) return GenericConnectionError::Server;
+        if (error > ConnectionErrors::ServerError_MAX && error < ConnectionErrors::ClientError_MAX) return GenericConnectionError::Client;
+
+        return GenericConnectionError::None;
+    }
+
+    std::shared_ptr<PacketParser> getPacketParser() { return this->_packetReader; }
 private:
     std::atomic<bool> _isPending;
 
-    //std::shared_ptr<PacketParser> _packetReader;
+    std::shared_ptr<PacketParser> _packetReader;
 
     ConnectionErrors _currentError = ConnectionErrors::None;
     socket_t clientConnection = (socket_t)(~0);

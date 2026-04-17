@@ -28,8 +28,15 @@ NetworkManager::NetworkManager(LegacyCord* core) {
 #elif defined(__linux__)
     LegacyCord::getLogger()->Info("Starting Networking Platform - POSIX");
     this->_platformNetworkingStub = std::make_shared<POSIXNetworking>(this, proxyAddress, proxyPort, hostAddress, hostPort);
+    //posix based threads start as soon we detach them, that makes _platformNetworkingStub null because the constructor hasnt completed
+    //so as a workaround to that issue we just start the thread after we know its valid
+    //the issue this caused was inside the thread calling NetworkManager::isListening() while _platformNetworkingStub is null
     dynamic_cast<POSIXNetworking *>(this->_platformNetworkingStub.get())->start();
 #endif
+
+    LegacyCord::getLogger()->Info("Creating Networking Pipelines");
+
+
 
     int connectionThreads = core->getConfig()->getInt("connection-threads", 4);
     if (connectionThreads > 16 || connectionThreads <= 0) connectionThreads = 16;
@@ -65,12 +72,28 @@ void NetworkManager::handleIncomingConnection(std::shared_ptr<PlayerConnection> 
     bestThread->addConnection(connection);
 }
 
+//we need to send a close player packet on the server if something happens here, client / server (check error type)
 void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> connection) {
-    //we need to send a close player packet on the server if something happens here, client / server (check error type)
+    GenericConnectionError error = PlayerConnection::genericError(connection->getConnectionError());
+
+    if (error == GenericConnectionError::Server) {
+        //server error, close client
+    }
+
+    if (error == GenericConnectionError::Client) {
+        //client error, close server
+    }
+
     {
         std::lock_guard<std::mutex> _guard(connectionMutex);
         std::erase(this->_connections, connection);
     }
+}
+
+//we use raw pointer here cause packet parser cant get the shared_ptr from where its made
+bool NetworkManager::handlePlayerPacket(PlayerConnection *connection, std::shared_ptr<LCEPacket> packet, bool fromServer) {
+    LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(packet->getId()), " Size: ", packet->getSize());
+    return true;
 }
 
 bool NetworkManager::isListening() {

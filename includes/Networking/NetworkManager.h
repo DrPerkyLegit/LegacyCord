@@ -9,6 +9,7 @@ class ConnectionThread;
 class PlayerConnection;
 class GenericNetworkingStub;
 class LegacyCord;
+class LCEPacket;
 
 class NetworkManager {
 public:
@@ -16,6 +17,7 @@ public:
 
     void handleIncomingConnection(std::shared_ptr<PlayerConnection> connection);
     void handleClosingConnection(std::shared_ptr<PlayerConnection> connection);
+    bool handlePlayerPacket(PlayerConnection* connection, std::shared_ptr<LCEPacket> packet, bool fromServer);
 
     bool isListening();
 
