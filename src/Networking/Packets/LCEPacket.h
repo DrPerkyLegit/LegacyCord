@@ -21,6 +21,12 @@ public:
         memcpy(this->data, buffer + 5, (this->size - 1));
     };
 
+    LCEPacket(int packetSize) {
+        this->size = 0;
+        this->packetId = 0;
+        this->data = new char[packetSize];
+    };
+
     ~LCEPacket() {
         delete[] data;
     }
@@ -31,6 +37,10 @@ public:
 
     int getSize() const {
         return size;
+    }
+
+    char* getRawData() {
+        return data;
     }
 
     bool writeShort(short value, int offset) {

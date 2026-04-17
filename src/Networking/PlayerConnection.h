@@ -26,7 +26,7 @@ enum class ConnectionErrors {
 
 class PlayerConnection {
 public:
-    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), _isPending(true), _packetReader(std::make_shared<PacketParser>(this)) {}
+    PlayerConnection(socket_t client, socket_t server) : clientConnection(client), serverConnection(server), /*_isPending(true), */_packetReader(std::make_shared<PacketParser>(this)) {}
 
     ConnectionErrors getConnectionError() const { return this->_currentError; }
     void setConnectionError(const ConnectionErrors error) { this->_currentError = error; }
@@ -43,11 +43,24 @@ public:
         return GenericConnectionError::None;
     }
 
+    std::vector<std::shared_ptr<LCEPacket>> getPendingPackets() {
+        std::lock_guard<std::mutex> _guard(_pendingPacketsMutex);
+        return _pendingPackets;
+    }
+
+    void queueCustomPacket(std::shared_ptr<LCEPacket>& _packet) {
+        std::lock_guard<std::mutex> _guard(_pendingPacketsMutex);
+        _pendingPackets.emplace_back(_packet);
+    }
+
     std::shared_ptr<PacketParser> getPacketParser() { return this->_packetReader; }
 private:
-    std::atomic<bool> _isPending;
+    //std::atomic<bool> _isPending;
 
     std::shared_ptr<PacketParser> _packetReader;
+
+    std::mutex _pendingPacketsMutex;
+    std::vector<std::shared_ptr<LCEPacket>> _pendingPackets;
 
     ConnectionErrors _currentError = ConnectionErrors::None;
     socket_t clientConnection = (socket_t)(~0);

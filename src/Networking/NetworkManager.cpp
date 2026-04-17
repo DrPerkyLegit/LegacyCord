@@ -78,6 +78,7 @@ void NetworkManager::handleIncomingConnection(std::shared_ptr<PlayerConnection> 
 void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> connection) {
     GenericConnectionError error = PlayerConnection::genericError(connection->getConnectionError());
 
+    //todo: abstract closing code to the platform networking files
     if (error == GenericConnectionError::Server) {
         //server error, close client
 #if defined(_WIN32)
