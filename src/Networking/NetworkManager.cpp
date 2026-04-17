@@ -80,10 +80,22 @@ void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> c
 
     if (error == GenericConnectionError::Server) {
         //server error, close client
+#if defined(_WIN32)
+        shutdown(connection->getClientSocket(), SD_BOTH);
+#else
+        shutdown(connection->getClientSocket(), SHUT_RDWR);
+        close(connection->getClientSocket());
+#endif
     }
 
     if (error == GenericConnectionError::Client) {
         //client error, close server
+#if defined(_WIN32)
+        shutdown(connection->getServerSocket(), SD_BOTH);
+#else
+        shutdown(connection->getServerSocket(), SHUT_RDWR);
+        close(connection->getServerSocket());
+#endif
     }
 
     {
