@@ -53,6 +53,7 @@ NetworkManager::NetworkManager(LegacyCord* core) {
 
 }
 
+//this is called from connection threads so we need to make sure anything ran here is quick
 void NetworkManager::handleIncomingConnection(std::shared_ptr<PlayerConnection> connection) {
     {
         std::lock_guard<std::mutex> _guard(connectionMutex);
@@ -73,6 +74,7 @@ void NetworkManager::handleIncomingConnection(std::shared_ptr<PlayerConnection> 
 }
 
 //we need to send a close player packet on the server if something happens here, client / server (check error type)
+//this is called from connection threads so we need to make sure anything ran here is quick
 void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> connection) {
     GenericConnectionError error = PlayerConnection::genericError(connection->getConnectionError());
 

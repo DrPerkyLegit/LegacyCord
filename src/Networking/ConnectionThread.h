@@ -30,15 +30,28 @@ private:
     std::mutex connectionMutex;
 
     void tick(NetworkManager* networkManager) {
+        std::vector<std::shared_ptr<PlayerConnection>> staleConnections;
 
         while (true) {
-            std::vector<std::shared_ptr<PlayerConnection>> localConnections; //snapshot
+            std::vector<std::shared_ptr<PlayerConnection>> localConnections; //connections snapshot
             {
                 std::lock_guard<std::mutex> lock(connectionMutex);
+
+                if (!staleConnections.empty()) {
+                    for (auto& c : staleConnections) {
+                        std::erase(connections, c);
+                    }
+                }
+
                 localConnections = connections;
             }
 
-            std::vector<std::shared_ptr<PlayerConnection>> staleConnections;
+            if (!staleConnections.empty()) {
+                for (auto& c : staleConnections) {
+                    networkManager->handleClosingConnection(c);
+                }
+                staleConnections.clear();
+            }
 
             for (auto& c : localConnections) {
                 networkManager->getNetworkingInstance()->tickConnection(c);
@@ -46,22 +59,6 @@ private:
                 if (c->getConnectionError() == ConnectionErrors::None) continue;
 
                 staleConnections.push_back(c);
-            }
-
-            if (staleConnections.size() > 0) {
-                {
-                    std::lock_guard<std::mutex> lock(connectionMutex);
-
-                    for (auto& c : staleConnections) {
-                        std::erase(connections, c);
-                    }
-                }
-
-                for (auto& c : staleConnections) {
-                    networkManager->handleClosingConnection(c);
-                }
-
-                staleConnections.clear();
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
