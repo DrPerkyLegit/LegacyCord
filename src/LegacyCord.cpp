@@ -9,15 +9,19 @@
 #include <thread>
 
 std::shared_ptr<Logger> LegacyCord::_logger = std::make_shared<Logger>(nullptr);
+std::shared_ptr<NetworkManager> LegacyCord::_networkManager;
 
 LegacyCord::LegacyCord() {
     this->_config = std::make_shared<Config>();
     getLogger()->Info("Loading LegacyCord");
 
     this->_config->load("server.properties");
-    getLogger()->setDebugOutput(this->_config->getBool("debug-config", false));
+    getLogger()->setDebugOutput(this->_config->getBool("debug-logs", false));
 
-    this->_networkManager = std::make_shared<NetworkManager>(this);
+    _networkManager = std::make_shared<NetworkManager>(this);
+
+    getLogger()->Info("Started LegacyCord on 0.0.0.0:25565 -> 127.0.0.1:25564");
+
 }
 
 bool LegacyCord::isRunning() const {
@@ -25,6 +29,10 @@ bool LegacyCord::isRunning() const {
 }
 
 //void LegacyCord::tick() { }
+
+std::shared_ptr<NetworkManager> LegacyCord::getNetworkManager() {
+    return _networkManager;
+}
 
 std::shared_ptr<Logger> LegacyCord::getLogger() {
     return _logger;
