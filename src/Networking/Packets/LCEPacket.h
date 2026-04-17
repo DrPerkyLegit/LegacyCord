@@ -33,8 +33,31 @@ public:
         return size;
     }
 
+    bool writeShort(short value, int offset) {
+        data[offset] = (value >> 8) & 0xFF;
+        data[offset+1] = value & 0xFF;
+        return true;
+    }
+
+    short readShort(int offset) {
+        int16_t value = static_cast<int16_t>(((data[offset] << 8) | (data[offset + 1])));
+        return value;
+    }
+
+    std::wstring readWString(int offset) {
+        std::wstring results; int16_t stringLength = readShort(offset);
+
+        for (int16_t i = 0 ; i < stringLength; i++) {
+            int16_t _char = readShort(offset + (i * 0x02));
+            results += static_cast<wchar_t>(_char);
+        }
+        return results;
+    }
+
 private:
     int size;
     uint8_t packetId;
+
     char* data;
+    //int offset;
 };

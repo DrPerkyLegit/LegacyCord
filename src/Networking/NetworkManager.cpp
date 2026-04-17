@@ -91,8 +91,15 @@ void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> c
 }
 
 //we use raw pointer here cause packet parser cant get the shared_ptr from where its made
+//packet data is kinda broken, theres some kinda issue with packet parsing so its slightly broken, should be fine for most packets
 bool NetworkManager::handlePlayerPacket(PlayerConnection *connection, std::shared_ptr<LCEPacket> packet, bool fromServer) {
-    LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(packet->getId()), " Size: ", packet->getSize());
+    if (!fromServer && packet->getId() == 0x03) {
+        int messageType = packet->readShort(0x00);
+        if (messageType == 0) { //custom message
+            LegacyCord::getLogger()->Debug("Player Sent Custom Message");
+        }
+    }
+    //LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(packet->getId()), " Size: ", packet->getSize());
     return true;
 }
 

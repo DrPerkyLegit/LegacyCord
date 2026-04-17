@@ -45,17 +45,25 @@ public:
                 (static_cast<uint8_t>(buffer[2]) << 8) |
                 (static_cast<uint8_t>(buffer[3]));
 
+            static int resyncCount = 0;
+
             if (packetSize <= 0 || packetSize > LCEPacket::MAXPACKETSIZE) {
                 //todo: add a limit to pushing back offset and throw socket error
+                resyncCount++;
                 memmove(buffer, buffer + 1, offset - 1);
-                offset -= 1;
+                offset--;
+
+                LegacyCord::getLogger()->Debug("Packet Buffer Desync Fix Attempt: ", resyncCount);
                 continue;
             }
 
             size_t total = packetSize + LCEPacket::HEADERSIZE;
             if (offset < total) return;
 
-            LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(static_cast<uint8_t>(buffer[4])), " Size: ", packetSize);
+            std::shared_ptr<LCEPacket> newPacket = std::make_shared<LCEPacket>(buffer);
+            LegacyCord::getNetworkManager()->handlePlayerPacket(associatedConnection, newPacket, fromServer);
+
+            //LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(static_cast<uint8_t>(buffer[4])), " Size: ", packetSize);
 
             size_t remaining = offset - total;
             memmove(buffer, buffer + total, remaining);
