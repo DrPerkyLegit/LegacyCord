@@ -22,7 +22,7 @@ public:
     }
 
     virtual void tickConnection(std::shared_ptr<PlayerConnection> connection) {
-        char buffer[4096];
+        char buffer[8192];
         socket_t clientSocket = connection->getClientSocket();
         socket_t serverSocket = connection->getServerSocket();
         {
