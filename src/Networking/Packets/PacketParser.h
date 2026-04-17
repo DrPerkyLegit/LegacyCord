@@ -29,7 +29,8 @@ public:
         size_t& offset = fromServer ? serverOffset : clientOffset;
 
         if (offset + size > LCEPacket::MAXPACKETSIZE) {
-            LegacyCord::getLogger()->Debug("Packet hit max buffer limit, are we leaking?: ", offset, " | ", size);
+            LegacyCord::getLogger()->Debug((fromServer ? "Server" : "Client"), " has hit max packet buffer limit, are we leaking?: ", offset, " | ", size);
+            //todo: never set offset to 0, we should scan for the start of another packet
             offset = 0;
             return;
         }
@@ -53,7 +54,7 @@ public:
                 memmove(buffer, buffer + 1, offset - 1);
                 offset--;
 
-                LegacyCord::getLogger()->Debug("Packet Buffer Desync Fix Attempt: ", resyncCount);
+                LegacyCord::getLogger()->Debug((fromServer ? "Server" : "Client"), " Has Packet Buffer Desync, Global Fix Attempts: ", resyncCount);
                 continue;
             }
 
