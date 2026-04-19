@@ -108,13 +108,44 @@ void NetworkManager::handleClosingConnection(std::shared_ptr<PlayerConnection> c
 //we use raw pointer here cause packet parser cant get the shared_ptr from where its made
 //packet data is kinda broken, theres some kinda issue with packet parsing so its slightly broken, should be fine for most packets
 bool NetworkManager::handlePlayerPacket(PlayerConnection *connection, std::shared_ptr<LCEPacket> packet, bool fromServer) {
-    if (!fromServer && packet->getId() == 0x03) {
+    LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(packet->getId()), " Size: ", packet->getSize());
+    bool pendingAuth = connection->isAuthenticationPending();
+    const uint8_t packetId = packet->getId();
+
+    if (pendingAuth && fromServer) {
+        if (packetId == 1) {
+            LegacyCord::getLogger()->Debug("Server Sent Correct Packet Flow");
+
+            //_platformNetworkingStub->sendRawPacket();
+
+            connection->setTransferFinished();
+            return false;
+        } else if (packetId == 2) {
+            _platformNetworkingStub->sendConstructedPacket(connection->getServerSocket(), connection->getLoginPacket());
+            return false;
+        }
+    } else if (!pendingAuth && !fromServer) {
+        if (packetId == 1) {
+            connection->cacheLoginPacket(packet);
+            return true;
+
+        } else if (packetId == 2) {
+            connection->cachePreLoginPacket(packet);
+            return true;
+        }
+    }
+
+    if (!fromServer && packet->getId() == 3) { //chat packet
         int messageType = packet->readShort(0x00);
         if (messageType == 0) { //custom message
             LegacyCord::getLogger()->Debug("Player Sent Custom Message");
+
+            connection->sendToServer("127.0.0.1", 25566);
         }
     }
-    //LegacyCord::getLogger()->Debug((fromServer ? "[S2C]"  : "[C2S]"), " ID:", static_cast<int>(packet->getId()), " Size: ", packet->getSize());
+    if (packet->getId() == 9) { //respawn packet
+
+    }
     return true;
 }
 

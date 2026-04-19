@@ -24,6 +24,10 @@ public:
         delete[] clientBuffer;
     }
 
+    void resetServerBuffer() {
+        serverOffset = 0;
+    }
+
     void feed(const char* data, size_t size, bool fromServer) {
         char* buffer = fromServer ? serverBuffer : clientBuffer;
         size_t& offset = fromServer ? serverOffset : clientOffset;

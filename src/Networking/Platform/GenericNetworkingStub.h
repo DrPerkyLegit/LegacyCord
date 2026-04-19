@@ -13,6 +13,8 @@ public:
     virtual ~GenericNetworkingStub() = default;
 
     virtual void tickConnection(std::shared_ptr<PlayerConnection> connection) = 0;
+    virtual void sendConstructedPacket(socket_t socket, std::shared_ptr<LCEPacket> _packet) = 0;
+    virtual void sendRawPacket(socket_t socket, std::shared_ptr<LCEPacket> _packet) = 0;
 
     bool isListening() const {
         return this->_threadListening;

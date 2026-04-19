@@ -43,6 +43,24 @@ public:
         return data;
     }
 
+    bool writeInt(int32_t value, int offset) {
+        data[offset] = (value >> 24) & 0xFF;
+        data[offset+1] = (value >> 16) & 0xFF;
+        data[offset+2] = (value >> 8) & 0xFF;
+        data[offset+3] = value & 0xFF;
+        return true;
+    }
+
+    int32_t readInt(int offset) {
+        int32_t value =
+            (data[offset] << 24) |
+            (data[offset+1] << 16) |
+            (data[offset+2] << 8) |
+            (data[offset+3]);
+
+        return value;
+    }
+
     bool writeShort(short value, int offset) {
         data[offset] = (value >> 8) & 0xFF;
         data[offset+1] = value & 0xFF;
