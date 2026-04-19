@@ -66,6 +66,7 @@ public class NetworkManager {
         }*/
         try {
             (serverbound ? connection.getClientReader() : connection.getServerReader()).feed(buffer, serverbound);
+
             if (!connection.isTraveling()) {
                 (serverbound ? connection.getServerChannel() : connection.getClientChannel()).write(buffer);
             }

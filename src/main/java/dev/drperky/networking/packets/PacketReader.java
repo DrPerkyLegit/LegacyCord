@@ -8,6 +8,7 @@ import dev.drperky.utils.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class PacketReader {
     private final ByteBuffer pendingBuffer = ByteBuffer.allocate(32*1024);
@@ -62,6 +63,19 @@ public class PacketReader {
             LCEPacket newPacket = new LCEPacket(packetSize - 1, packetId, packetBuffer);
             try {
                 boolean isTraveling = assignedConnection.isTraveling();
+                if (!isTraveling && packetId == 250 && !serverbound) {
+                    pendingBuffer.mark();
+
+                    String identifier = this.readUtf(20);
+                    if (identifier.equals("PM|Transfer")) {
+                        String serverAddress = this.readUtf(128);
+                        int serverPort = pendingBuffer.getInt();
+
+                        assignedConnection.queueTravel(serverAddress, serverPort);
+                    }
+                    pendingBuffer.reset();
+                }
+
                 if (isTraveling && !serverbound) {
                     if (packetId == 1) {
                         pendingBuffer.mark();
@@ -146,7 +160,7 @@ public class PacketReader {
 
         StringBuilder builder = new StringBuilder(stringLength);
         for (int i = 0; i < stringLength; i++) {
-            char c = pendingBuffer.getChar();
+            char c = (char)pendingBuffer.getShort();
             builder.append(c);
         }
 

@@ -97,6 +97,7 @@ public class PlayerConnection {
     }
 
     public void finishHandle() {
+        this.currentlyTraveling = true;
         this.awaitingHandling = false;
     }
 
@@ -110,7 +111,7 @@ public class PlayerConnection {
 
     public void queueTravel(String host, int port) {
         this.awaitingHandling = true;
-        this.currentlyTraveling = true;
+        this.currentlyTraveling = false; // was true;
         this.travelingHost = host;
         this.travelingPort = port;
     }

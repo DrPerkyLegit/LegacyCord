@@ -18,8 +18,6 @@ public class LegacyCord {
 
     public static void main(String[] args) {
         Logger.Info("Loading LegacyCord");
-        getEventBus().registerPacketEvent(3, new ServerTransferring.ChatMessagePacketListener());
-
         //load config here
 
         Logger.Info("Starting NetworkManager");
@@ -34,16 +32,4 @@ public class LegacyCord {
         }
         Logger.Info("Exiting LegacyCord...");
     }
-
-    public static class ServerTransferring {
-        public static class ChatMessagePacketListener implements EventListener<PacketEvent> {
-            @Override
-            public void handle(PacketEvent event) {
-                if (!event.serverbound) return;
-                //Logger.Info("Attempting To Travel");
-                //event.connection.queueTravel("127.0.0.1", 25566);
-            }
-        }
-    }
-
 }
