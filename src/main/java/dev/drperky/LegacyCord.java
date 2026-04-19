@@ -41,7 +41,7 @@ public class LegacyCord {
             public void handle(PacketEvent event) {
                 if (!event.serverbound) return;
                 //Logger.Info("Attempting To Travel");
-                event.connection.queueTravel("127.0.0.1", 25566);
+                //event.connection.queueTravel("127.0.0.1", 25566);
             }
         }
     }
