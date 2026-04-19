@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="LegacyCord-Java.main:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/LegacyCord_Java_main_jar</output-path>
+    <root id="archive" name="LegacyCord-Java.main.jar">
+      <element id="module-output" name="LegacyCord-Java.main" />
+    </root>
+  </artifact>
+</component>
