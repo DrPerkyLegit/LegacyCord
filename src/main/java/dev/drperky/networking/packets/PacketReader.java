@@ -93,31 +93,7 @@ public class PacketReader {
                         short xzSize = pendingBuffer.getShort();
                         byte hellScale = pendingBuffer.get();
 
-                        //System.out.println("clientVersion: " + clientVersion);
-                        //System.out.println("username: " + username);
-                        System.out.println("levelType: " + levelType);
-                        System.out.println("seed: " + seed);
-                        System.out.println("gameType: " + gameType);
-                        System.out.println("dimension: " + dimension);
-                        System.out.println("mapHeight: " + mapHeight);
-                        //System.out.println("maxPlayers: " + maxPlayers);
-                        //System.out.println("offlineXuid: " + offlineXuid);
-                        //System.out.println("onlineXuid: " + onlineXuid);
-                        //System.out.println("friendsOnlyUGC: " + friendsOnlyUGC);
-                        //System.out.println("ugcPlayersVersion: " + ugcPlayersVersion);
-                        System.out.println("difficulty: " + difficulty);
-                        //System.out.println("multiplayerInstanceId: " + multiplayerInstanceId);
-                        //System.out.println("playerIndex: " + playerIndex);
-                        //System.out.println("playerSkinId: " + playerSkinId);
-                        //System.out.println("playerCapeId: " + playerCapeId);
-                        //System.out.println("isGuest: " + isGuest);
-                        System.out.println("newSeaLevel: " + newSeaLevel);
-                        //System.out.println("uiGamePrivileges: " + uiGamePrivileges);
-                        System.out.println("xzSize: " + xzSize);
-                        System.out.println("hellScale: " + hellScale);
-
                         pendingBuffer.reset();
-
                         {
                             //tell the client new info, set dim to the nether, server will correct the dim and client will get new info
 
@@ -125,7 +101,6 @@ public class PacketReader {
                             ByteBuffer newBuffer = ByteBuffer.allocate(4 + newPacketSize);
                             newBuffer.putInt(newPacketSize);
                             newBuffer.put((byte)9);
-                            newBuffer.mark();
 
                             newBuffer.put((byte)(dimension == -1 ? 0 : -1));
                             newBuffer.put((byte)gameType);
