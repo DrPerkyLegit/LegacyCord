@@ -32,12 +32,11 @@ public class PacketReader {
         int len = data.remaining();
         if (len <= 0) return;
 
-        byte[] tmp = new byte[len];
-        data.mark(); data.get(tmp); data.reset();
+        data.mark();
+        pendingBuffer.put(data);
+        data.reset();
 
-        pendingBuffer.put(tmp);
         pendingBuffer.flip();
-
         while (pendingBuffer.remaining() > 4 && !hasTooManyStreamErrors()) {
             pendingBuffer.mark();
 
@@ -94,15 +93,16 @@ public class PacketReader {
                         pendingBuffer.get(); //skip m_friendsOnlyUGC
                         pendingBuffer.getInt(); //skip m_ugcPlayersVersion
 
-                        int difficulty = pendingBuffer.get(); //
+                        byte difficulty = pendingBuffer.get(); //
                         pendingBuffer.getInt(); //skip m_multiplayerInstanceId
                         pendingBuffer.get(); //skip m_playerIndex
                         pendingBuffer.getInt(); //skip m_playerSkinId
                         pendingBuffer.getInt(); //skip m_playerCapeId
                         pendingBuffer.get(); //skip m_isGuest
 
-                        boolean newSeaLevel = pendingBuffer.get() != 0;
+                        byte newSeaLevel = pendingBuffer.get();
                         pendingBuffer.getInt(); //skip m_uiGamePrivileges //todo: send this as another packet to the client
+                        //todo: look into ServerSettingsChangedPacket, it handles host option changes, and difficulty changes
 
                         short xzSize = pendingBuffer.getShort();
                         byte hellScale = pendingBuffer.get();
@@ -110,7 +110,6 @@ public class PacketReader {
                         pendingBuffer.reset();
                         {
                             //tell the client new info, set dim to the nether, server will correct the dim and client will get new info
-
                             int newPacketSize = 13 + levelType.length();
                             ByteBuffer newBuffer = ByteBuffer.allocate(4 + newPacketSize);
                             newBuffer.putInt(newPacketSize);
@@ -121,11 +120,11 @@ public class PacketReader {
                             newBuffer.putShort(mapHeight);
                             this.writeUtf(levelType, 16);
                             newBuffer.putLong(seed);
-                            newBuffer.put((byte)difficulty);
-                            newBuffer.put((byte)(newSeaLevel ? 1 : 0));
+                            newBuffer.put(difficulty);
+                            newBuffer.put(newSeaLevel);
                             newBuffer.putShort((short)entityId);
-                            newBuffer.putShort((short)xzSize);
-                            newBuffer.put((byte)hellScale);
+                            newBuffer.putShort(xzSize);
+                            newBuffer.put(hellScale);
                             assignedConnection.getServerChannel().write(newBuffer);
                         }
 
