@@ -1,12 +1,12 @@
 package dev.drperky.networking.threads;
 
-import dev.drperky.networking.datatypes.PlayerConnection;
+import dev.drperky.networking.datatypes.LCEConnection;
 import dev.drperky.networking.NetworkManager;
+import dev.drperky.networking.datatypes.ServerTravelData;
 import dev.drperky.utils.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -20,18 +20,19 @@ public class NetworkThread extends Thread {
         this._netManager = _netManager;
     }
 
-    public static void transferServer(PlayerConnection connection) {
+    public static void transferServer(LCEConnection connection) {
         try {
             if (connection.getServerChannel() != null) connection.getServerChannel().close();
+            ServerTravelData travelData = connection.getTravelData();
 
             SocketChannel serverChannel = SocketChannel.open();
-            serverChannel.connect(new InetSocketAddress(connection.getQueuedTravelHost(), connection.getQueuedTravelPort()));
+            serverChannel.connect(new InetSocketAddress(travelData.getQueuedTravelHost(), travelData.getQueuedTravelPort()));
 
             serverChannel.configureBlocking(false);
             serverChannel.socket().setTcpNoDelay(true);
 
             connection.setConnectedServer(serverChannel);
-            connection.getServerChannel().write(connection.getCachedPacket_PreLogin().CompressPacket());
+            connection.getServerChannel().write(travelData.getCachedPacket_PreLogin().CompressPacket());
         } catch(Exception e) { }
     }
 
@@ -66,10 +67,10 @@ public class NetworkThread extends Thread {
                                 serverChannel.configureBlocking(false);
                                 serverChannel.socket().setTcpNoDelay(true);
 
-                                PlayerConnection playerConnection = new PlayerConnection(clientChannel);
-                                playerConnection.setConnectedServer(serverChannel);
+                                LCEConnection LCEConnection = new LCEConnection(clientChannel);
+                                LCEConnection.setConnectedServer(serverChannel);
 
-                                _netManager.handleIncomingConnection(playerConnection);
+                                _netManager.handleIncomingConnection(LCEConnection);
                             } catch (IOException e) {
                                 Logger.Warn("Client is unable to connect to server (", serverAddress.toString(), ")");
                                 //todo: send client kick message

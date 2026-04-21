@@ -1,8 +1,11 @@
-package dev.drperky.networking.packets;
+package dev.drperky.networking.datatypes;
 
 import java.nio.ByteBuffer;
 
 public class LCEPacket {
+    public static int HEADERSIZE = 4;
+    public static int MAXSIZE = 64*1024;
+
     int dataSize;
     int packetId;
     ByteBuffer data;

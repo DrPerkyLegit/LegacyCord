@@ -1,10 +1,8 @@
 package dev.drperky.networking.threads;
 
 import dev.drperky.networking.datatypes.ConnectionError;
-import dev.drperky.networking.datatypes.PlayerConnection;
+import dev.drperky.networking.datatypes.LCEConnection;
 import dev.drperky.networking.NetworkManager;
-import dev.drperky.networking.packets.LCEPacket;
-import dev.drperky.utils.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -14,7 +12,7 @@ import java.util.Set;
 
 public class ConnectionThread extends Thread {
 
-    private final Set<PlayerConnection> assignedPlayerConnections = new HashSet<>();
+    private final Set<LCEConnection> assignedLCEConnections = new HashSet<>();
     ByteBuffer networkBuffer = ByteBuffer.allocate(8192);
     private final NetworkManager _netManager;
 
@@ -22,47 +20,47 @@ public class ConnectionThread extends Thread {
         this._netManager = _netManager;
     }
 
-    public void assignNewConnection(PlayerConnection connection) {
-        synchronized (assignedPlayerConnections) {
-            this.assignedPlayerConnections.add(connection);
+    public void assignNewConnection(LCEConnection connection) {
+        synchronized (assignedLCEConnections) {
+            this.assignedLCEConnections.add(connection);
         }
     }
 
     public int getAssignedClientCount() {
-        synchronized (assignedPlayerConnections) {
-            return this.assignedPlayerConnections.size();
+        synchronized (assignedLCEConnections) {
+            return this.assignedLCEConnections.size();
         }
     }
 
     public void run() {
-        List<PlayerConnection> staleConnections = new ArrayList<>();
+        List<LCEConnection> staleConnections = new ArrayList<>();
         while (!Thread.currentThread().isInterrupted()) {
 
             //we snapshot so other threads can access assignedClientConnections still
-            List<PlayerConnection> localConnections;
-            synchronized (assignedPlayerConnections) {
+            List<LCEConnection> localConnections;
+            synchronized (assignedLCEConnections) {
                 if (!staleConnections.isEmpty()) {
-                    for (PlayerConnection connection : staleConnections) {
-                        assignedPlayerConnections.remove(connection);
+                    for (LCEConnection connection : staleConnections) {
+                        assignedLCEConnections.remove(connection);
                     }
                 }
 
-                localConnections = new ArrayList<>(assignedPlayerConnections); //connection snapshot
+                localConnections = new ArrayList<>(assignedLCEConnections); //connection snapshot
             }
 
             if (!staleConnections.isEmpty()) {
-                for (PlayerConnection connection : staleConnections) {
+                for (LCEConnection connection : staleConnections) {
                     _netManager.handleClosingConnection(connection);
                 }
 
                 staleConnections.clear();
             }
 
-            for (PlayerConnection connection : localConnections) {
+            for (LCEConnection connection : localConnections) {
                 try {
-                    if (connection.isAwaitingHandling()) {
+                    if (connection.getTravelData().isAwaitingHandling()) {
                         NetworkThread.transferServer(connection);
-                        connection.finishHandle();
+                        connection.getTravelData().finishHandle();
                     }
                 } catch(Exception e) { }
                 try {
@@ -91,7 +89,7 @@ public class ConnectionThread extends Thread {
                             _netManager.handleIncomingStream(connection, networkBuffer, false);
                             networkBuffer.clear();
                         } else if (size == -1) {
-                            if (!connection.isTraveling()) {
+                            if (!connection.getTravelData().isTraveling()) {
                                 connection.setPendingError(ConnectionError.ServerClosed);
                                 throw new Exception("Server Socket Closed");
                             }

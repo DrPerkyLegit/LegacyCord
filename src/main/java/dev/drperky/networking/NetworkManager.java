@@ -1,21 +1,44 @@
 package dev.drperky.networking;
 
-import dev.drperky.networking.datatypes.ConnectionError;
-import dev.drperky.networking.datatypes.PlayerConnection;
+import dev.drperky.networking.datatypes.LCEConnection;
+import dev.drperky.networking.datatypes.LCEPacket;
+import dev.drperky.networking.pipelines.NetworkPipeline;
+import dev.drperky.networking.pipelines.NetworkPipelineContext;
+import dev.drperky.networking.pipelines.NetworkPipelineType;
+import dev.drperky.networking.pipelines.both.StreamDecoderPipeline;
+import dev.drperky.networking.pipelines.both.StreamEncoderPipeline;
+import dev.drperky.networking.pipelines.clientbound.ProxyMessagePacketPipeline;
 import dev.drperky.networking.threads.ConnectionThread;
 import dev.drperky.networking.threads.NetworkThread;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class NetworkManager {
     NetworkThread _networkThread;
     final Set<ConnectionThread> _connectionThreads = new HashSet<>();
 
+    final Map<NetworkPipelineType, List<NetworkPipeline>> _registeredPipelines = new HashMap<>();
+
     public NetworkManager() {
+        //keep decoders at the top and the encoders at the bottom for pipelines
+        {
+            List<NetworkPipeline> pipelineList = new ArrayList<>();
+            pipelineList.add(new StreamDecoderPipeline());
+            pipelineList.add(new StreamEncoderPipeline());
+
+            _registeredPipelines.put(NetworkPipelineType.SERVERBOUND, pipelineList);
+        }
+
+        {
+            List<NetworkPipeline> pipelineList = new ArrayList<>();
+            pipelineList.add(new StreamDecoderPipeline());
+            pipelineList.add(new ProxyMessagePacketPipeline());
+            pipelineList.add(new StreamEncoderPipeline());
+
+            _registeredPipelines.put(NetworkPipelineType.CLIENTBOUND, pipelineList);
+        }
+
         for (int i = 0; i < 4; i++) {
             ConnectionThread newThread = new ConnectionThread(this);
             newThread.start();
@@ -27,7 +50,7 @@ public class NetworkManager {
         this._networkThread.start();
     };
 
-    public void handleIncomingConnection(PlayerConnection connection) {
+    public void handleIncomingConnection(LCEConnection connection) {
         ConnectionThread bestThread = null;
 
         synchronized (_connectionThreads) {
@@ -46,7 +69,7 @@ public class NetworkManager {
         }
     }
 
-    public void handleClosingConnection(PlayerConnection connection) {
+    public void handleClosingConnection(LCEConnection connection) {
         try {
             //ConnectionError error = connection.getPendingError();
 
@@ -56,23 +79,19 @@ public class NetworkManager {
         } catch(Exception e) {}
     }
 
-    public void handleIncomingStream(PlayerConnection connection, ByteBuffer buffer, boolean serverbound) {
-
-        /*for (NetworkPipeline pipeline : _registeredPipelines) {
-            if (!pipeline.feed(connection, buffer, serverbound)) {
-                //todo: add debug log for pipeline closing a packet
-                return; //cancel pipeline if its canceled
-            }
-        }*/
+    public void handleIncomingStream(LCEConnection connection, ByteBuffer buffer, boolean serverbound) {
         try {
-            (serverbound ? connection.getClientReader() : connection.getServerReader()).feed(buffer, serverbound);
+            List<NetworkPipeline> pipelines = _registeredPipelines.get((serverbound ? NetworkPipelineType.SERVERBOUND : NetworkPipelineType.CLIENTBOUND));
+            NetworkPipelineContext ctx = new NetworkPipelineContext(connection, buffer, serverbound);
 
-            if (!connection.isTraveling()) {
-                (serverbound ? connection.getServerChannel() : connection.getClientChannel()).write(buffer);
+            for (NetworkPipeline pipeline : pipelines) {
+                if (!pipeline.pipe(ctx)) {
+                    //todo: add debug log for pipeline closing, check kick status and handle it
+                    return;
+                }
             }
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
+
+        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     public boolean isTicking() {

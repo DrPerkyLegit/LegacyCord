@@ -1,20 +1,6 @@
 package dev.drperky.networking.datatypes;
 
-import dev.drperky.networking.NetworkManager;
-import dev.drperky.networking.packets.LCEPacket;
-import dev.drperky.networking.packets.PacketReader;
-
-import java.nio.channels.SocketChannel;
-
-public class PlayerConnection {
-    SocketChannel clientChannel;
-    PacketReader clientReader;
-
-    SocketChannel serverChannel;
-    PacketReader serverReader;
-
-    ConnectionError pendingError;
-
+public class ServerTravelData {
     LCEPacket cachedPacket_PreLogin;
     LCEPacket cachedPacket_Login;
 
@@ -24,15 +10,7 @@ public class PlayerConnection {
     boolean hasTraveled;
     boolean awaitingHandling;
 
-    public PlayerConnection(SocketChannel client) {
-        this.clientChannel = client;
-        this.clientReader = new PacketReader(this);
-
-        this.serverChannel = null;
-        this.serverReader = new PacketReader(this);
-
-        this.pendingError = ConnectionError.None;
-
+    ServerTravelData() {
         this.cachedPacket_PreLogin = null;
         this.cachedPacket_Login = null;
 
@@ -42,27 +20,6 @@ public class PlayerConnection {
         this.hasTraveled = false;
         this.awaitingHandling = false;
     }
-
-    public ConnectionError getPendingError() {
-        return this.pendingError;
-    }
-
-    public void setPendingError(ConnectionError error) {
-        this.pendingError = error;
-    }
-
-    public SocketChannel getServerChannel() { return this.serverChannel; }
-    public SocketChannel getClientChannel() { return this.clientChannel; }
-
-    public PacketReader getServerReader() { return this.serverReader; }
-    public PacketReader getClientReader() { return this.clientReader; }
-
-    public void setConnectedServer(SocketChannel server) {
-        this.serverReader.clear();
-        this.serverChannel = server;
-    }
-
-    //server transfer apis
 
     public void setCachedPacket_PreLogin(LCEPacket packet) {
         cachedPacket_PreLogin = packet.clone();
@@ -78,10 +35,6 @@ public class PlayerConnection {
 
     public LCEPacket getCachedPacket_Login() {
         return cachedPacket_Login;
-    }
-
-    public boolean isConnectedToServer() {
-        return this.serverChannel != null;
     }
 
     public boolean isTraveling() {
