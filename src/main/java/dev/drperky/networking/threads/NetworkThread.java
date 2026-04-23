@@ -16,31 +16,56 @@ import java.util.Iterator;
 public class NetworkThread extends Thread {
     private final NetworkManager _netManager;
 
-    public NetworkThread(NetworkManager _netManager) {
+    private final String serverAddress;
+    private final int serverPort;
+    private final int proxyPort;
+
+    public NetworkThread(NetworkManager _netManager, String serverAddress, int serverPort, int proxyPort) {
         this._netManager = _netManager;
+
+        this.serverAddress = serverAddress;
+        this.serverPort = serverPort;
+        this.proxyPort = proxyPort;
     }
 
-    public static void transferServer(LCEConnection connection) {
+    public static boolean transferServer(LCEConnection connection) {
         try {
             if (connection.getServerChannel() != null) connection.getServerChannel().close();
-            ServerTravelData travelData = connection.getTravelData();
 
+            boolean didConnect = connectToServer(connection, connection.getTravelData().getQueuedTravelHost(), connection.getTravelData().getQueuedTravelPort());
+            if (didConnect) {
+                connection.getServerChannel().write(connection.getTravelData().getCachedPacket_PreLogin().CompressPacket());
+            }
+
+            return didConnect;
+        } catch(Exception e) { }
+
+        return false;
+    }
+
+    public static boolean connectToServer(LCEConnection connection, String serverAddress, int serverPort) {
+        try {
             SocketChannel serverChannel = SocketChannel.open();
-            serverChannel.connect(new InetSocketAddress(travelData.getQueuedTravelHost(), travelData.getQueuedTravelPort()));
+            serverChannel.connect(new InetSocketAddress(serverAddress, serverPort));
 
             serverChannel.configureBlocking(false);
             serverChannel.socket().setTcpNoDelay(true);
 
             connection.setConnectedServer(serverChannel);
-            connection.getServerChannel().write(travelData.getCachedPacket_PreLogin().CompressPacket());
-        } catch(Exception e) { }
+        } catch (IOException e) {
+            Logger.Warn("Client is unable to connect to server (", serverAddress, ":", String.valueOf(serverPort), ")");
+            //todo: send client kick message
+            return false;
+        }
+
+        return true;
     }
 
     public void run() {
         try {
             ServerSocketChannel proxySocket = ServerSocketChannel.open();
             proxySocket.configureBlocking(false);
-            proxySocket.bind(new InetSocketAddress(25565));
+            proxySocket.bind(new InetSocketAddress(this.proxyPort));
 
             Selector selector = Selector.open();
             proxySocket.register(selector, SelectionKey.OP_ACCEPT);
@@ -59,21 +84,9 @@ public class NetworkThread extends Thread {
                             clientChannel.configureBlocking(false);
                             clientChannel.socket().setTcpNoDelay(true);
 
-                            InetSocketAddress serverAddress = new InetSocketAddress("127.0.0.1", 25564);
-                            try {
-                                SocketChannel serverChannel = SocketChannel.open();
-                                serverChannel.connect(serverAddress);
-
-                                serverChannel.configureBlocking(false);
-                                serverChannel.socket().setTcpNoDelay(true);
-
-                                LCEConnection LCEConnection = new LCEConnection(clientChannel);
-                                LCEConnection.setConnectedServer(serverChannel);
-
-                                _netManager.handleIncomingConnection(LCEConnection);
-                            } catch (IOException e) {
-                                Logger.Warn("Client is unable to connect to server (", serverAddress.toString(), ")");
-                                //todo: send client kick message
+                            LCEConnection connection = new LCEConnection(clientChannel);
+                            if (connectToServer(connection, this.serverAddress, this.serverPort)) {
+                                _netManager.handleIncomingConnection(connection);
                             }
                         }
                     }

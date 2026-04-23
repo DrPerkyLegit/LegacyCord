@@ -18,7 +18,7 @@ public class Logger {
         System.out.print(type + " ");
 
         for (String _s : n) {
-            System.out.print(_s + " ");
+            System.out.print(_s);
         }
         System.out.println();
     }

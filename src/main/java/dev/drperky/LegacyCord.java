@@ -2,7 +2,11 @@ package dev.drperky;
 
 import dev.drperky.events.core.EventBus;
 import dev.drperky.networking.NetworkManager;
+import dev.drperky.utils.Config;
 import dev.drperky.utils.Logger;
+
+import java.io.File;
+import java.net.URISyntaxException;
 
 import static java.lang.Thread.sleep;
 
@@ -12,10 +16,10 @@ public class LegacyCord {
 
     public static void main(String[] args) {
         Logger.Info("Loading LegacyCord");
-        //load config here
+        Config proxyConfig = Config.load(LegacyCord.getRunningJar());
 
         Logger.Info("Starting NetworkManager");
-        _netManager = new NetworkManager();
+        _netManager = new NetworkManager(proxyConfig.serverAddress, proxyConfig.serverPort, proxyConfig.proxyPort);
 
         while (_netManager.isTicking()) {
             try {
@@ -25,6 +29,14 @@ public class LegacyCord {
             }
         }
         Logger.Info("Exiting LegacyCord...");
+    }
+
+    private static File getRunningJar() {
+        try {
+            return new File(LegacyCord.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static NetworkManager getNetworkManager() {

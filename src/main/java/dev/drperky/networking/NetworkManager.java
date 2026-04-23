@@ -20,7 +20,7 @@ public class NetworkManager {
 
     final Map<NetworkPipelineType, List<NetworkPipeline>> _registeredPipelines = new HashMap<>();
 
-    public NetworkManager() {
+    public NetworkManager(String serverAddress, int serverPort, int proxyPort) {
         //keep decoders at the top and the encoders at the bottom for pipelines
         {
             List<NetworkPipeline> pipelineList = new ArrayList<>();
@@ -46,7 +46,7 @@ public class NetworkManager {
             _connectionThreads.add(newThread);
         }
 
-        this._networkThread = new NetworkThread(this);
+        this._networkThread = new NetworkThread(this, serverAddress, serverPort, proxyPort);
         this._networkThread.start();
     };
 
