@@ -10,8 +10,12 @@ import dev.drperky.networking.pipelines.both.StreamEncoderPipeline;
 import dev.drperky.networking.pipelines.clientbound.ProxyMessagePacketPipeline;
 import dev.drperky.networking.threads.ConnectionThread;
 import dev.drperky.networking.threads.NetworkThread;
+import dev.drperky.utils.Logger;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.*;
 
 public class NetworkManager {
@@ -74,8 +78,13 @@ public class NetworkManager {
             //ConnectionError error = connection.getPendingError();
 
             //todo: handle errors, for now we just close sockets if possible
-            if (connection.getClientChannel() != null) connection.getClientChannel().close();
-            if (connection.getServerChannel() != null) connection.getServerChannel().close();
+            if (connection.getClientChannel() != null) {
+
+                connection.getClientChannel().close();
+            }
+            if (connection.getServerChannel() != null) {
+                connection.getServerChannel().close();
+            }
         } catch(Exception e) {}
     }
 
@@ -92,6 +101,42 @@ public class NetworkManager {
             }
 
         } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public boolean transferServer(LCEConnection connection) {
+        try {
+            if (connection.getServerChannel() != null) connection.getServerChannel().close();
+
+            boolean didConnect = connectToServer(connection, connection.getTravelData().getQueuedTravelHost(), connection.getTravelData().getQueuedTravelPort());
+            if (didConnect) {
+                connection.getServerChannel().write(connection.getTravelData().getCachedPacket_PreLogin().CompressPacket());
+            }
+
+            return didConnect;
+        } catch(Exception e) {
+            Logger.Warn("Client is unable to connect to transfer server");
+            handleClosingConnection(connection);
+        }
+
+        return false;
+    }
+
+    public boolean connectToServer(LCEConnection connection, String serverAddress, int serverPort) {
+        try {
+            SocketChannel serverChannel = SocketChannel.open();
+            serverChannel.connect(new InetSocketAddress(serverAddress, serverPort));
+
+            serverChannel.configureBlocking(false);
+            serverChannel.socket().setTcpNoDelay(true);
+
+            connection.setConnectedServer(serverChannel);
+        } catch (IOException e) {
+            Logger.Warn("Client is unable to connect to server (", serverAddress, ":", String.valueOf(serverPort), ")");
+            handleClosingConnection(connection);
+            return false;
+        }
+
+        return true;
     }
 
     public boolean isTicking() {

@@ -28,39 +28,6 @@ public class NetworkThread extends Thread {
         this.proxyPort = proxyPort;
     }
 
-    public static boolean transferServer(LCEConnection connection) {
-        try {
-            if (connection.getServerChannel() != null) connection.getServerChannel().close();
-
-            boolean didConnect = connectToServer(connection, connection.getTravelData().getQueuedTravelHost(), connection.getTravelData().getQueuedTravelPort());
-            if (didConnect) {
-                connection.getServerChannel().write(connection.getTravelData().getCachedPacket_PreLogin().CompressPacket());
-            }
-
-            return didConnect;
-        } catch(Exception e) { }
-
-        return false;
-    }
-
-    public static boolean connectToServer(LCEConnection connection, String serverAddress, int serverPort) {
-        try {
-            SocketChannel serverChannel = SocketChannel.open();
-            serverChannel.connect(new InetSocketAddress(serverAddress, serverPort));
-
-            serverChannel.configureBlocking(false);
-            serverChannel.socket().setTcpNoDelay(true);
-
-            connection.setConnectedServer(serverChannel);
-        } catch (IOException e) {
-            Logger.Warn("Client is unable to connect to server (", serverAddress, ":", String.valueOf(serverPort), ")");
-            //todo: send client kick message
-            return false;
-        }
-
-        return true;
-    }
-
     public void run() {
         try {
             ServerSocketChannel proxySocket = ServerSocketChannel.open();
@@ -85,7 +52,7 @@ public class NetworkThread extends Thread {
                             clientChannel.socket().setTcpNoDelay(true);
 
                             LCEConnection connection = new LCEConnection(clientChannel);
-                            if (connectToServer(connection, this.serverAddress, this.serverPort)) {
+                            if (_netManager.connectToServer(connection, this.serverAddress, this.serverPort)) {
                                 _netManager.handleIncomingConnection(connection);
                             }
                         }

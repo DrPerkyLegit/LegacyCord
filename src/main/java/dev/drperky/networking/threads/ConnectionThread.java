@@ -59,7 +59,7 @@ public class ConnectionThread extends Thread {
             for (LCEConnection connection : localConnections) {
                 try {
                     if (connection.getTravelData().isAwaitingHandling()) {
-                        NetworkThread.transferServer(connection);
+                        _netManager.transferServer(connection);
                         connection.getTravelData().finishHandle();
                     }
                 } catch(Exception e) { }
